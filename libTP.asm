@@ -375,67 +375,66 @@ crearTableroDinamico proc
 crearTableroDinamico endp
 
 juegop proc
-juego:
+    juego:
 
-    call limpiarPantalla
-    call imprimirTablero
+        call limpiarPantalla
+        call imprimirTablero
 
-    lea dx, rayas1
-    call imp_cartel
+        lea dx, rayas1
+        call imp_cartel
 
-    mov dl, movimientos
-    lea bx, contadorAscii
-    call r2a
+        mov dl, movimientos
+        lea bx, contadorAscii
+        call r2a
 
-    lea dx, cartelmovrestantes
-    call imp_cartel
+        lea dx, cartelmovrestantes
+        call imp_cartel
 
-    lea dx, contadorAscii
-    call imp_cartel
+        lea dx, contadorAscii
+        call imp_cartel
 
-    call imprimirStats
+        call imprimirStats
 
-    lea dx, rayas1
-    call imp_cartel
+        lea dx, rayas1
+        call imp_cartel
 
-    cmp mostrarReceta,1
-    jne seguirJuego
+        cmp mostrarReceta,1
+        jne seguirJuego
 
-    lea dx, cartelReceta
-    call imp_cartel
-    mov mostrarReceta,0
+        lea dx, cartelReceta
+        call imp_cartel
+        mov mostrarReceta,0
 
-seguirJuego:
+    seguirJuego:
 
-    call leerTecla
+        call leerTecla
 
-    ; === CHECK SALIDA GENERAL ===
-    cmp finalJuego, 1
-    je salirJuego
+        ; === CHECK SALIDA GENERAL ===
+        cmp finalJuego, 1
+        je salirJuego
 
-    ; === PERDIDA POR MOVIMIENTOS ===
-    cmp movimientos, 0
-    jbe juegoperdido
+        ; === PERDIDA POR MOVIMIENTOS ===
+        cmp movimientos, 0
+        jbe juegoperdido
 
-    jmp juego
+        jmp juego
 
 
-;cuando el usuario pierde
-juegoperdido:
-    mov finalJuego, 1
-    call limpiarPantalla
-    lea dx, cartelPerdiste
-    call imp_cartel
+    ;cuando el usuario pierde
+    juegoperdido:
+        mov finalJuego, 1
+        call limpiarPantalla
+        lea dx, cartelPerdiste
+        call imp_cartel
 
-    mov ah,08h
-    int 21h
-    
-    jmp salirJuego
+        mov ah,08h
+        int 21h
+        
+        jmp salirJuego
 
-;salida unificada
-salirJuego:
-    ret
-
+    ;salida unificada
+    salirJuego:
+        ret
 juegop endp
 
 imprimirStats proc
@@ -515,7 +514,6 @@ leerTecla proc
     salirTecla:
         mov finalJuego, 1
         ret
-
 leerTecla endp
 
 moverDerecha proc
@@ -583,7 +581,6 @@ moverDerecha proc
         ret
 moverDerecha endp
 
-
 moverIzquierda proc
     mov si,0
     
@@ -646,7 +643,6 @@ moverIzquierda proc
         ret
 moverIzquierda endp
 
-
 moverArriba proc
 
     mov si,0
@@ -705,7 +701,6 @@ moverArriba proc
     finMoverArriba:
         ret
 moverArriba endp
-
 
 moverAbajo proc
     mov si,0
@@ -924,7 +919,6 @@ usarSoplete endp
 ;   CF = 0 si encontro
 ;   CF = 1 si no encontro
 ;==========================================================================================;
-
 buscarHomero proc
     push ax
 
@@ -1239,19 +1233,19 @@ preguntarReinicio proc
     lea dx, msg_reintentar
     call imp_cartel
 
-pidoTecla:
-    mov ah, 08h
-    int 21h
+    pidoTecla:
+        mov ah, 08h
+        int 21h
 
-    cmp al, '1'
-    je ok
+        cmp al, '1'
+        je ok
 
-    cmp al, '2'
-    je ok
+        cmp al, '2'
+        je ok
 
-    jmp pidoTecla
+        jmp pidoTecla
 
-ok:
-    ret
+    ok:
+        ret
 preguntarReinicio endp
 end
