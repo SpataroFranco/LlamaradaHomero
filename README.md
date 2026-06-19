@@ -54,8 +54,6 @@ El jugador pierde si:
 | O     | Usar soplete             |
 | 6     | Salir del juego          |
 
-También se aceptan letras mayúsculas.
-
 ---
 
 ## 🗺️ Elementos del tablero
@@ -133,7 +131,7 @@ El soplete destruye obstáculos rompibles formando una cruz alrededor de Homero:
 ```text
     X
     X
-XX H XX
+X X H X X 
     X
     X
 ```
@@ -180,7 +178,7 @@ equivalentes a **300 casilleros**.
 La aleatoriedad se implementa utilizando:
 
 * El reloj interno de la BIOS como semilla inicial.
-* Un Generador Congruencial Lineal (LCG).
+* Un algoritmo para producir una secuencia de números pseudoaleatorios
 
 ---
 
