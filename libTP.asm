@@ -56,10 +56,7 @@
     rayas1 db "================================================================", 0dh, 0ah, 24h
 .code
 
-;--------------------------------
-;función se encarga de imprimir cadenas de texto en la pantalla utilizando la interrupción 21h de DOS (función 09h)
-;Recibe el offset del texto dn DX
-;--------------------------------
+;FUNCION PARA IMPRIMIR CARTELES
 imp_cartel proc 
     push ax
     mov ah, 09h
@@ -67,10 +64,8 @@ imp_cartel proc
     pop ax
     ret
 imp_cartel endp
+;-------------------------------
 
-;--------------------------------
-;Función que se utiliza para borrar el contenido actual de la pantalla para refrescar la visualización del juego
-;--------------------------------
 limpiarPantalla proc
 
     mov ax,0003h
@@ -80,10 +75,7 @@ limpiarPantalla proc
 limpiarPantalla endp
 
 ;--------------------------------
-;Funcion que verifica si la posición actual del jugador en el tablero contiene el carácter 'R'.
-;Si es así, procesa la recolección de la receta necesaria para ganar
-;Recibe el registro BX como indice
-;Actualiza la variable tieneReceta
+;RECOLECTAR RECETA
 ;--------------------------------
 recolectarReceta proc
     cmp tablero[bx],'R'
@@ -96,10 +88,6 @@ recolectarReceta proc
         ret
 recolectarReceta endp
 
-;--------------------------------
-;Funcion que recorre la estructura de datos del mapa y dibuja el tablero de juego en la consola
-;Utiliza pilas para conservar los registros y no alterar el flujo mientras imprime el tablero
-;--------------------------------
 imprimirTablero proc
     push ax
     push bx
@@ -211,9 +199,10 @@ imprimirTablero proc
 imprimirTablero endp
 
 ;=========================================================
+; crearTableroDinamico
+;
 ; Genera un nuevo tablero para cada partida.
-; Utiliza variables globales y el reloj del sistema para aleatoridad
-; Retorna el tablero inicializado en memoria 
+;
 ; Pasos:
 ;   1) Calcula el tamaño real del mapa.
 ;   2) Inicializa la semilla aleatoria.
@@ -331,46 +320,18 @@ crearTableroDinamico proc
 
     ; La receta es obligatoria para poder ganar.
     ; Solo existe una en todo el tablero.
-    mov cx, tamano_tot       ; cantidad máxima de intentos
-
     buscarReceta:
+        ; Elegimos aleatoriamente un casillero vacío
+        ; hasta encontrar uno disponible.
         mov bx, tamano_tot
         call numeroAleatorio
 
         mov si, dx
 
-        ; Verificamos que el índice esté dentro del tablero
-        cmp si, tamano_tot
-        jae siguienteIntento
-
-        ; Solo se coloca sobre un casillero vacío
         cmp tablero[si], '.'
-        jne siguienteIntento
+        jne buscarReceta
 
         mov tablero[si], 'R'
-        jmp recetaColocada
-
-    siguienteIntento:
-        loop buscarReceta
-
-        ; Si no se pudo colocar aleatoriamente,
-        ; buscamos linealmente un espacio libre.
-        xor si, si
-        mov cx, tamano_tot
-
-    buscarRecetaLineal:
-        cmp tablero[si], '.'
-        je ponerReceta
-
-        inc si
-        loop buscarRecetaLineal
-
-        jmp recetaColocada
-
-    ponerReceta:
-        mov tablero[si], 'R'
-
-    recetaColocada:
 
     ; Colocamos dos sopletes.
     ; Los sopletes permiten destruir obstáculos
@@ -413,77 +374,70 @@ crearTableroDinamico proc
     ret
 crearTableroDinamico endp
 
-;=========================================================
-;Es el bucle principal del juego. 
-;Controla el flujo de la partida, detectando si el usuario sigue jugando, gana o pierde 
-;(en cuyo caso muestra el cartel de derrota y activa el flag de fin de juego)
-;=========================================================
 juegop proc
-    juego:
+juego:
 
-        call limpiarPantalla
-        call imprimirTablero
+    call limpiarPantalla
+    call imprimirTablero
 
-        lea dx, rayas1
-        call imp_cartel
+    lea dx, rayas1
+    call imp_cartel
 
-        mov dl, movimientos
-        lea bx, contadorAscii
-        call r2a
+    mov dl, movimientos
+    lea bx, contadorAscii
+    call r2a
 
-        lea dx, cartelmovrestantes
-        call imp_cartel
+    lea dx, cartelmovrestantes
+    call imp_cartel
 
-        lea dx, contadorAscii
-        call imp_cartel
+    lea dx, contadorAscii
+    call imp_cartel
 
-        call imprimirStats
+    call imprimirStats
 
-        lea dx, rayas1
-        call imp_cartel
+    lea dx, rayas1
+    call imp_cartel
 
-        cmp mostrarReceta,1
-        jne seguirJuego
+    cmp mostrarReceta,1
+    jne seguirJuego
 
-        lea dx, cartelReceta
-        call imp_cartel
-        mov mostrarReceta,0
+    lea dx, cartelReceta
+    call imp_cartel
+    mov mostrarReceta,0
 
-    seguirJuego:
+seguirJuego:
 
-        call leerTecla
+    call leerTecla
 
-        ; === CHECK SALIDA GENERAL ===
-        cmp finalJuego, 1
-        je salirJuego
+    ; === CHECK SALIDA GENERAL ===
+    cmp finalJuego, 1
+    je salirJuego
 
-        ; === PERDIDA POR MOVIMIENTOS ===
-        cmp movimientos, 0
-        jbe juegoperdido
+    ; === PERDIDA POR MOVIMIENTOS ===
+    cmp movimientos, 0
+    jbe juegoperdido
 
-        jmp juego
+    jmp juego
 
 
-    ;cuando el usuario pierde
-    juegoperdido:
-        mov finalJuego, 1
-        call limpiarPantalla
-        lea dx, cartelPerdiste
-        call imp_cartel
+;cuando el usuario pierde
+juegoperdido:
+    mov finalJuego, 1
+    call limpiarPantalla
+    lea dx, cartelPerdiste
+    call imp_cartel
 
-        mov ah,08h
-        int 21h
-        
-        jmp salirJuego
+    mov ah,08h
+    int 21h
+    
+    jmp salirJuego
 
-    ;salida unificada
-    salirJuego:
-        ret
+;salida unificada
+salirJuego:
+    ret
+
 juegop endp
 
-;=========================================================
-; Funcion que muestra en pantalla las estadísticas actuales del jugador
-;=========================================================
 imprimirStats proc
     lea dx, cartelSopletes
     call imp_cartel
@@ -498,10 +452,8 @@ imprimirStats proc
     ret
 imprimirStats endp
 
-;=========================================================
-; Se encarga de capturar la entrada del teclado del usuario para registrar sus movimientos o acciones
-;=========================================================
 leerTecla proc
+
     mov ah,08h
     int 21h
 
@@ -563,11 +515,9 @@ leerTecla proc
     salirTecla:
         mov finalJuego, 1
         ret
+
 leerTecla endp
 
-;=========================================================
-;Funciones encargadas de actualizar la posición del personaje en el tablero según la dirección elegida
-;=========================================================
 moverDerecha proc
     mov si,0
 
@@ -633,6 +583,7 @@ moverDerecha proc
         ret
 moverDerecha endp
 
+
 moverIzquierda proc
     mov si,0
     
@@ -695,6 +646,7 @@ moverIzquierda proc
         ret
 moverIzquierda endp
 
+
 moverArriba proc
 
     mov si,0
@@ -754,6 +706,7 @@ moverArriba proc
         ret
 moverArriba endp
 
+
 moverAbajo proc
     mov si,0
 
@@ -811,9 +764,6 @@ moverAbajo proc
         ret
 moverAbajo endp
 
-;=========================================================
-;Gestiona la lógica cuando el jugador pasa por encima de un ítem recolectable
-;=========================================================
 recolectarObjeto proc
 
         cmp tablero[bx],'S'
@@ -830,9 +780,21 @@ recolectarObjeto proc
             ret
 recolectarObjeto endp
 
-;=========================================================
-;Genera un salto de linea
-;=========================================================
+victoria:
+
+    mov finalJuego, 1
+
+    call limpiarPantalla
+    call imprimirTablero
+
+    lea dx, cartelGano
+    call imp_cartel
+
+    mov ah,08h
+    int 21h
+
+    ret
+
 salto proc
 
     push ax
@@ -853,7 +815,6 @@ salto endp
 
 ;===r2a===================================================================
 ; DL = numero a convertir, BX = donde guardar mov dl lea bx
-;==========================================================================
 r2a proc ;Número binario → 3 dígitos ASCII
     push ax
     push dx
@@ -887,9 +848,6 @@ r2a proc ;Número binario → 3 dígitos ASCII
     pop ax
     ret
 r2a endp
-
-;==========================================================================
-; Funcion que controla el comportamiento y la lógica de los obstáculos dinámicos del mapa
 ;==========================================================================
 proceso_obstaculos proc
 
@@ -934,11 +892,12 @@ proceso_obstaculos proc
     pop bx
     ret    
 proceso_obstaculos endp
+;==========================================================================================;
+; usarSoplete
+; Si hay sopletes disponibles, busca a Homero, descuenta un soplete
+; y rompe bloques cercanos a distancia 2.
+;==========================================================================================;
 
-;==========================================================================================
-; Funcion que verifica si hay sopletes disponibles. Si es así, descuenta uno y llama a la lógica para romper bloques cercanos 
-;en un radio de distancia 2
-;==========================================================================================
 usarSoplete proc
     push ax
     push si
@@ -958,14 +917,14 @@ usarSoplete proc
         ret
 usarSoplete endp
 
-;==========================================================================================
-; Funcion que escanea el tablero para encontrar la posición actual de Homero. Devuelve la posición en el registro SI y 
-;utiliza el flag de acarreo (CF) para indicar si lo encontró o no
+;==========================================================================================;
+; buscarHomero
 ; Salida:
 ;   SI = posicion donde esta Homero
 ;   CF = 0 si encontro
 ;   CF = 1 si no encontro
-;==========================================================================================
+;==========================================================================================;
+
 buscarHomero proc
     push ax
 
@@ -993,10 +952,11 @@ buscarHomero proc
 buscarHomero endp
 
 ;==========================================================================================;
-; Funcion que realiza la acción de romper bloques en forma de cruz alrededor de la posición del jugador cuando se usa el soplete
-;Rompe en cruz hasta distancia 2.
+; romperZonaSoplete
 ; Entrada:
 ;   SI = posicion de Homero
+;
+; Rompe en cruz hasta distancia 2.
 ;==========================================================================================;
 romperZonaSoplete proc
     push ax
@@ -1119,7 +1079,7 @@ romperZonaSoplete proc
 romperZonaSoplete endp
 
 ;==========================================================================================;
-; Funcion que elimina o transforma un casillero del tablero
+; romperCasillero
 ; Entrada:
 ;   BX = posicion del tablero a revisar
 ;==========================================================================================;
@@ -1138,7 +1098,7 @@ romperCasillero proc
 romperCasillero endp
 
 ;==========================================================================================;
-; Función de validación que analiza un carácter para determinar si es un obstáculo que puede ser destruido (CF=0) o no (CF=1)
+; esBloqueRompible
 ; Entrada:
 ;   AL = caracter a analizar
 ;
@@ -1146,6 +1106,7 @@ romperCasillero endp
 ;   CF = 0 si es rompible
 ;   CF = 1 si no es rompible
 ;==========================================================================================;
+
 esBloqueRompible proc
 
     cmp al, 'V'
@@ -1166,9 +1127,6 @@ esBloqueRompible proc
         ret
 esBloqueRompible endp
 
-;==========================================================================================
-; Funcion que gestiona el movimiento de las telarañas, que al ser tocadas reaparecen en otra ubicación del tablero
-;==========================================================================================
 reubicarTelarana proc
     push ax
     push bx
@@ -1206,7 +1164,10 @@ reubicarTelarana proc
 reubicarTelarana endp
 
 ;=========================================================
-; Funcion que genera un número pseudoaleatorio entre 0 y BX-1.
+; numeroAleatorio
+;
+; Genera un número pseudoaleatorio entre 0 y BX-1.
+;
 ; Entrada:
 ;   BX = límite superior (no incluido).
 ;
@@ -1239,9 +1200,8 @@ numeroAleatorio proc
     pop ax
     ret
 numeroAleatorio endp
-
 ;========================================
-;Funcion que reiniciar parametros
+;reiniciar parametros
 ;========================================
 reiniciarParametros proc
     push ax
@@ -1273,39 +1233,25 @@ reiniciarParametros proc
 reiniciarParametros endp
 
 ;==============================
-;Funcion que consulta si desea jugar de nuevo o salir del juego
+;PREGUNTAR REINCIO
 ;==============================
 preguntarReinicio proc
     lea dx, msg_reintentar
     call imp_cartel
 
-    pidoTecla:
-        mov ah, 08h
-        int 21h
+pidoTecla:
+    mov ah, 08h
+    int 21h
 
-        cmp al, '1'
-        je ok
+    cmp al, '1'
+    je ok
 
-        cmp al, '2'
-        je ok
+    cmp al, '2'
+    je ok
 
-        jmp pidoTecla
+    jmp pidoTecla
 
-    ok:
-        ret
-    preguntarReinicio endp
-
-    victoria:
-        mov finalJuego, 1
-
-        call limpiarPantalla
-        call imprimirTablero
-
-        lea dx, cartelGano
-        call imp_cartel
-
-        mov ah,08h
-        int 21h
-
-        ret
+ok:
+    ret
+preguntarReinicio endp
 end
