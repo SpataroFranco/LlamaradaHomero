@@ -136,12 +136,12 @@ main proc
     int 21h
 
 inicioPartida:
-    call reiniciarParametros
-    call crearTableroDinamico
-    call juegop
+    call reiniciarParametros  ;resetea vidad, movs, inventario y estados
+    call crearTableroDinamico ;genera aleatoriamente el tablero
+    call juegop               ;bucle principal del juego
 
-    call limpiarPantalla
-    call preguntarReinicio
+    call limpiarPantalla      ;termina la partida y limpia la pantalla
+    call preguntarReinicio    ;volver a jugar?
 
     cmp al, '1'  ; comparo lo que quedo en al
     je inicioPartida
